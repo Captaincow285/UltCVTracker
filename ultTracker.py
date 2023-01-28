@@ -14,10 +14,11 @@ playersGreen = []
 playersRed = []
 topBarText = []
 
-def readRibScrape(fileName):
-    excelFile = openpyxl.load_workbook()
+def readRibScrape(filepath):
+    excelFile = openpyxl.load_workbook(filepath)
+    
 
-def readImage(path):
+def readImage(path): #/TODO: turn the arrays into a return statement instead of global variables
     # load and resize the image
     image = cv2.imread(path)
     image = cv2.resize(image, (1920, 1080))
