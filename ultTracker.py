@@ -7,7 +7,7 @@ import openpyxl
 
 pytesseract.pytesseract.tesseract_cmd=r'C:\Users\Capta\Documents\Tesseract\tesseract.exe'
 
-table = [["map", "round", "team1name", "team1eco", "team1ults","team2name", "team2eco", "team2ults", "winningTeam"]]
+table = [["map", "round", "pulledTBText", "team1eco", "team1ults","team2name", "team2eco", "team2ults", "winningTeam"]]
 ultLeft = []
 ultRight = []
 playersLeft = []
@@ -110,7 +110,7 @@ def readImage(path): #/TODO: turn the arrays into a return statement instead of 
         leftCrop = leftCrop[1]
         leftCrop = cv2.erode(leftCrop, kernel, iterations=2)
         leftCrop = cv2.dilate(leftCrop, kernel, iterations=1)
-        name = pytesseract.image_to_string(leftCrop, config= "-c tessedit_char_whitelist=01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz --psm 8")
+        name = pytesseract.image_to_string(leftCrop, config= "-c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz --psm 8")
         playersLeft.append(name.rstrip('\n'))
 
         rightCrop = OCRImage[yCoord:(yCoord + 30), playerNameXValues[1]:(playerNameXValues[1] + 125)]
@@ -119,7 +119,7 @@ def readImage(path): #/TODO: turn the arrays into a return statement instead of 
         rightCrop = rightCrop[1]
         rightCrop = cv2.erode(rightCrop, kernel, iterations=1)
         rightCrop = cv2.dilate(rightCrop, kernel, iterations=1)
-        name = pytesseract.image_to_string(rightCrop, config= "-c tessedit_char_whitelist=01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz --psm 8")
+        name = pytesseract.image_to_string(rightCrop, config= "-c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz --psm 8")
         playersRight.append(name.rstrip('\n'))
 
     isGreen = True
@@ -160,23 +160,42 @@ def readImage(path): #/TODO: turn the arrays into a return statement instead of 
     
     # Loadout values: Y 705-740, X green 155-245, X red 1705-1800
     loadoutValueImage = OCRImage[705:740, 155:245]
-    value = pytesseract.image_to_string(loadoutValueImage, config= "-c tessedit_char_whitelist=01234567890, --psm 8")
+    value = pytesseract.image_to_string(loadoutValueImage, config= "-c tessedit_char_whitelist=0123456789, --psm 8")
     loadoutValues.append(int(value.replace(",", "")))
     
     loadoutValueImage = OCRImage[705:740, 1705:1800]
-    value = pytesseract.image_to_string(loadoutValueImage, config= "-c tessedit_char_whitelist=01234567890, --psm 8")
+    value = pytesseract.image_to_string(loadoutValueImage, config= "-c tessedit_char_whitelist=0123456789, --psm 8")
     loadoutValues.append(int(value.replace(',', '')))
     
-    # topBarText key: team 1, team 1 score, team 2 score, team 2
+    # topBarText key: team 1, team 1 score, round number, team 2 score, team 2
+    # get left team abbreviation
     topBar = OCRImage[10:60, 630:710]
-    topBar = cv2.erode(topBar, kernel, iterations=1)
-    team1Name = pytesseract.image_to_string(topBar, config= "-c tessedit_char_whitelist=01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ --psm 8")
-    topBarText.append(team1Name.rstrip('\n'))
+    topBar = cv2.erode(topBar, kernel, iterations=2)
+    pulledTBText = pytesseract.image_to_string(topBar, config= "-c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ --psm 8")
+    topBarText.append(pulledTBText.rstrip('\n'))
 
+    # gets left round #
     topBar = OCRImage[5:65, 800:870]
-    topBar = cv2.erode(topBar, kernel, iterations=1)
-    team1Name = pytesseract.image_to_string(topBar, config= "-c tessedit_char_whitelist=01234567890 --psm 8")
-    topBarText.append(team1Name.rstrip('\n'))
+    topBar = cv2.erode(topBar, kernel, iterations=2)
+    cv2.imshow("plhdr", topBar)
+    cv2.waitKey(0)
+    pulledTBText = pytesseract.image_to_string(topBar, config= "-c tessedit_char_whitelist=0123456789 --psm 8")
+    topBarText.append(int(pulledTBText.rstrip('\n')))
+
+    # gets right round #
+    topBar = OCRImage[5:65, 1050:1120]
+    topBar = cv2.erode(topBar, kernel, iterations=2)
+    cv2.imshow("plhdr", topBar)
+    cv2.waitKey(0)
+    pulledTBText = pytesseract.image_to_string(topBar, config= "-c tessedit_char_whitelist=0123456789 --psm 8")
+    topBarText.append(int(topBarText[1] + int(pulledTBText.rstrip('\n'))))
+    topBarText.append(int(pulledTBText.rstrip('\n')))
+
+    # gets right team abbreviation
+    topBar = OCRImage[10:60, 1210:1290]
+    topBar = cv2.erode(topBar, kernel, iterations=2)
+    pulledTBText = pytesseract.image_to_string(topBar, config= "-c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ --psm 8")
+    topBarText.append(pulledTBText.rstrip('\n'))
 
     print(loadoutValues)
     print(topBarText)
@@ -186,9 +205,14 @@ def readImage(path): #/TODO: turn the arrays into a return statement instead of 
     print(ultRight)
     #return []
 
-# Row format: "map", "round", "team1name", "team1ults","team2name", "team2ults", "winningTeam"
-def matchNames():
-    pass
+# Row format: ["map", "round", "pulledTBText", "team1eco", "team1ults","team2name", "team2eco", "team2ults", "winningTeam"]
+# matchingPlayers is playersLeft and/or playersRight
+# matchingUlts is ultLeft or ultRight
+def matchNames(dictList, matchingPlayers, matchingUlts):
+    matchedData = []
+    for i, playerData in enumerate(dictList):
+        for j, round in enumerate(matchingPlayers):
+            pass
 
 """
 # loop over the boundaries
