@@ -29,18 +29,30 @@ def readRibScrape(filepath):
         if i == 0:
             continue
 
-        selectedData  = []
-        selectedData.append([row[2].value, row[3].value])
-        selectedData.append([row[6].value, row[7].value])
-        selectedData.append([row[10].value, row[11].value])
-        selectedData.append([row[14].value, row[15].value])
-        selectedData.append([row[18].value, row[19].value])
-        selectedData.append([row[22].value, row[23].value])
-        selectedData.append([row[26].value, row[27].value])
-        selectedData.append([row[30].value, row[31].value])
-        selectedData.append([row[34].value, row[35].value])
-        selectedData.append([row[38].value, row[39].value])
-        matchinfo.append(selectedData)
+        selectedData = []
+        selectedData.append([row[2].value, row[3].value, row[4].value])
+        selectedData.append([row[6].value, row[7].value, row[8].value])
+        selectedData.append([row[10].value, row[11].value, row[12].value])
+        selectedData.append([row[14].value, row[15].value, row[16].value])
+        selectedData.append([row[18].value, row[19].value, row[20].value])
+        selectedData.append([row[22].value, row[23].value, row[24].value])
+        selectedData.append([row[26].value, row[27].value, row[28].value])
+        selectedData.append([row[30].value, row[31].value, row[32].value])
+        selectedData.append([row[34].value, row[35].value, row[36].value])
+        selectedData.append([row[38].value, row[39].value, row[40].value])
+
+        sortedData = []
+        sortedData2 = []
+        comparisonName = selectedData[0][2]
+        for item in selectedData:
+            if item[2] == comparisonName:
+                sortedData.append(item)
+            else:
+                sortedData2.append(item)
+        
+        sortedData.extend(sortedData2)
+        print(sortedData)
+        matchinfo.append(sortedData)
     return matchinfo
 
 
@@ -215,19 +227,21 @@ def readImage(path): #/TODO: turn the arrays into a return statement instead of 
 # matchingUlts is one map list of ultLeft or ultRight
 # dict list is a list of players for one map and their agent in [[p1, a1], [p2, a2]....] form
 def matchNames(dictList, matchingPlayers, matchingUlts):
-    matchedData = []
-    for i, playerData in enumerate(dictList):
+    matchedData = [[], [], [], [], []]
+    for i, playerData in enumerate(dictList): # each loop should build a round in the individual playerlist
+        # print(playerData)
         for j, round in enumerate(matchingPlayers):
+            # print(round)
             for k, player in enumerate(round):
-                print(round)
-                print(player)
-                if compareNames(player, playerData):
-                    matchedData[i].append([playerData, playerData, matchingUlts[i][k]])
-                    # print(matchedData)
+                # print(round)
+                # print(player)
+                if compareNames(player, playerData[0]):
+                    matchedData[i].append([playerData[0], playerData[1], matchingUlts[j][k]])
+    # print(matchedData)
     return matchedData
 
 def compareNames(name1, name2):
-    print(damerauLevenshtein(name1, name2, similarity=False))
+    print(name1 + " " + name2 + " " + str(damerauLevenshtein(name1, name2, similarity=False)))
     if name1 == name2:
         return True
     else:
@@ -266,14 +280,15 @@ args = vars(ap.parse_args())
 matchInfo = readRibScrape("Paper Rex vs EDward Gaming.xlsx")
 imageOutput = readImage(args["image"])
 print(imageOutput)
-print(imageOutput[2][0])
-print(imageOutput[3][0])
+print(imageOutput[2][1])
+print(imageOutput[3][1])
 
-tempvar1 = [imageOutput[2][0], imageOutput[2][0], imageOutput[2][0]]
-tempvar2 = [imageOutput[3][0], imageOutput[3][0], imageOutput[3][0]]
+tempvar1 = [imageOutput[2][1], imageOutput[2][1], imageOutput[2][1]]
+tempvar2 = [imageOutput[3][1], imageOutput[3][1], imageOutput[3][1]]
 
-print(matchInfo[0][0:5])
-plhdr = matchNames(matchInfo[0][0:4], tempvar1, tempvar2)
+print(matchInfo[0][5:10])
+print(tempvar2)
+plhdr = matchNames(matchInfo[0][5:10], tempvar1, tempvar2)
 print(plhdr)
 
 # convert into the correct format after getting rib data
