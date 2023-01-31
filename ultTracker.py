@@ -4,36 +4,44 @@ import argparse
 import cv2
 import pytesseract
 import openpyxl
+from fastDamerauLevenshtein import damerauLevenshtein
 
 pytesseract.pytesseract.tesseract_cmd=r'C:\Users\Capta\Documents\Tesseract\tesseract.exe'
 
 table = [["map", "round", "pulledTBText", "team1eco", "team1ults","team2name", "team2eco", "team2ults", "winningTeam"]]
+"""
+loadoutValues = []
 ultLeft = []
 ultRight = []
 playersLeft = []
 playersRight = []
 topBarText = []
+"""
 roundsWorkheet = None
 
 def readRibScrape(filepath):
     excelFile = openpyxl.load_workbook(filepath)
-    roundsWorksheet = excelFile('WIN CONDITIONS')
-    infoWorksheet = excelFile('PLAYERS INFO')
+    roundsWorksheet = excelFile['WIN CONDITIONS']
+    infoWorksheet = excelFile['PLAYERS INFO']
 
     matchinfo = []
-    selectedData  = []
-    for row in infoWorksheet:
+    for i, row in enumerate(infoWorksheet):
+        if i == 0:
+            continue
+
+        selectedData  = []
         selectedData.append([row[2].value, row[3].value])
         selectedData.append([row[6].value, row[7].value])
         selectedData.append([row[10].value, row[11].value])
         selectedData.append([row[14].value, row[15].value])
-        selectedData.append([row[16].value, row[17].value])
-        selectedData.append([row[20].value, row[21].value])
-        selectedData.append([row[24].value, row[25].value])
-        selectedData.append([row[28].value, row[29].value])
-        selectedData.append([row[32].value, row[33].value])
-        selectedData.append([row[36].value, row[37].value])
+        selectedData.append([row[18].value, row[19].value])
+        selectedData.append([row[22].value, row[23].value])
+        selectedData.append([row[26].value, row[27].value])
+        selectedData.append([row[30].value, row[31].value])
+        selectedData.append([row[34].value, row[35].value])
+        selectedData.append([row[38].value, row[39].value])
         matchinfo.append(selectedData)
+    return matchinfo
 
 
 def readImage(path): #/TODO: turn the arrays into a return statement instead of global variables
@@ -177,16 +185,16 @@ def readImage(path): #/TODO: turn the arrays into a return statement instead of 
     # gets left round #
     topBar = OCRImage[5:65, 800:870]
     topBar = cv2.erode(topBar, kernel, iterations=2)
-    cv2.imshow("plhdr", topBar)
-    cv2.waitKey(0)
+    #cv2.imshow("plhdr", topBar)
+    #cv2.waitKey(0)
     pulledTBText = pytesseract.image_to_string(topBar, config= "-c tessedit_char_whitelist=0123456789 --psm 8")
     topBarText.append(int(pulledTBText.rstrip('\n')))
 
     # gets right round #
     topBar = OCRImage[5:65, 1050:1120]
     topBar = cv2.erode(topBar, kernel, iterations=2)
-    cv2.imshow("plhdr", topBar)
-    cv2.waitKey(0)
+    #cv2.imshow("plhdr", topBar)
+    #cv2.waitKey(0)
     pulledTBText = pytesseract.image_to_string(topBar, config= "-c tessedit_char_whitelist=0123456789 --psm 8")
     topBarText.append(int(topBarText[1] + int(pulledTBText.rstrip('\n'))))
     topBarText.append(int(pulledTBText.rstrip('\n')))
@@ -197,22 +205,36 @@ def readImage(path): #/TODO: turn the arrays into a return statement instead of 
     pulledTBText = pytesseract.image_to_string(topBar, config= "-c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ --psm 8")
     topBarText.append(pulledTBText.rstrip('\n'))
 
-    print(loadoutValues)
-    print(topBarText)
-    print(playersLeft)
-    print(ultLeft)
-    print(playersRight)
-    print(ultRight)
+    return [loadoutValues, topBarText, [playersLeft, playersRight], [ultLeft, ultRight]]
+
+    
     #return []
 
 # Row format: ["map", "round", "pulledTBText", "team1eco", "team1ults","team2name", "team2eco", "team2ults", "winningTeam"]
-# matchingPlayers is playersLeft and/or playersRight
-# matchingUlts is ultLeft or ultRight
+# matchingPlayers is one map list of playersLeft and/or playersRight
+# matchingUlts is one map list of ultLeft or ultRight
+# dict list is a list of players for one map and their agent in [[p1, a1], [p2, a2]....] form
 def matchNames(dictList, matchingPlayers, matchingUlts):
     matchedData = []
     for i, playerData in enumerate(dictList):
         for j, round in enumerate(matchingPlayers):
-            pass
+            for k, player in enumerate(round):
+                print(round)
+                print(player)
+                if compareNames(player, playerData):
+                    matchedData[i].append([playerData, playerData, matchingUlts[i][k]])
+                    # print(matchedData)
+    return matchedData
+
+def compareNames(name1, name2):
+    print(damerauLevenshtein(name1, name2, similarity=False))
+    if name1 == name2:
+        return True
+    else:
+        if damerauLevenshtein(name1, name2, similarity=False) < 4:
+            return True
+        else:
+            return False
 
 """
 # loop over the boundaries
@@ -241,7 +263,18 @@ row = [] #reset after each iteration
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", help = "path to the image")
 args = vars(ap.parse_args())
-readImage(args["image"])
+matchInfo = readRibScrape("Paper Rex vs EDward Gaming.xlsx")
+imageOutput = readImage(args["image"])
+print(imageOutput)
+print(imageOutput[2][0])
+print(imageOutput[3][0])
+
+tempvar1 = [imageOutput[2][0], imageOutput[2][0], imageOutput[2][0]]
+tempvar2 = [imageOutput[3][0], imageOutput[3][0], imageOutput[3][0]]
+
+print(matchInfo[0][0:5])
+plhdr = matchNames(matchInfo[0][0:4], tempvar1, tempvar2)
+print(plhdr)
 
 # convert into the correct format after getting rib data
 # table.append()
