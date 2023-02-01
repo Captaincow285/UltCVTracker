@@ -4,6 +4,8 @@ import argparse
 import cv2
 import pytesseract
 import openpyxl
+from os import listdir
+from os.path import isfile, join
 from fastDamerauLevenshtein import damerauLevenshtein
 
 pytesseract.pytesseract.tesseract_cmd=r'C:\Users\Capta\Documents\Tesseract\tesseract.exe'
@@ -19,10 +21,25 @@ topBarText = []
 """
 roundsWorkheet = None
 
+def getFiles(folderPath):
+    files = [f for f in listdir(folderPath) if isfile(join(folderPath, f))]
+    print(files)
+    imagePaths = []
+    excelPath = ""
+    for item in files:
+        if item.split(".")[1].casefold() == "jpg" or item.split(".")[1].casefold() == "png":
+            imagePaths.append(item)
+        if item.split(".")[1].casefold() == "xlsx":
+            excelPath = item
+    print(imagePaths)
+    print(excelPath)
+    filePathList = [excelPath, imagePaths]
+    return filePathList
+
 def readRibScrape(filepath):
     excelFile = openpyxl.load_workbook(filepath)
-    roundsWorksheet = excelFile['WIN CONDITIONS']
-    infoWorksheet = excelFile['PLAYERS INFO']
+    roundsWorksheet = excelFile['Win Cond']
+    infoWorksheet = excelFile['Matches Info']
 
     matchinfo = []
     for i, row in enumerate(infoWorksheet):
@@ -30,17 +47,19 @@ def readRibScrape(filepath):
             continue
 
         selectedData = []
-        selectedData.append([row[2].value, row[3].value, row[4].value])
-        selectedData.append([row[6].value, row[7].value, row[8].value])
-        selectedData.append([row[10].value, row[11].value, row[12].value])
-        selectedData.append([row[14].value, row[15].value, row[16].value])
-        selectedData.append([row[18].value, row[19].value, row[20].value])
-        selectedData.append([row[22].value, row[23].value, row[24].value])
-        selectedData.append([row[26].value, row[27].value, row[28].value])
-        selectedData.append([row[30].value, row[31].value, row[32].value])
-        selectedData.append([row[34].value, row[35].value, row[36].value])
-        selectedData.append([row[38].value, row[39].value, row[40].value])
-
+        team1Name = row[4].value
+        team1Players = row[2].value.split(",")
+        team1Agents = row[3].value.split(",")
+        for i, name in enumerate(team1Players):
+            selectedData.append([name, team1Agents[i], team1Name])
+        
+        team2Name = row[4].value
+        team2Players = row[2].value.split(",")
+        team2Agents = row[3].value.split(",")
+        for i, name in enumerate(team2Players):
+            selectedData.append([name, team2Agents[i], team2Name])
+        
+        """
         sortedData = []
         sortedData2 = []
         comparisonName = selectedData[0][2]
@@ -49,10 +68,11 @@ def readRibScrape(filepath):
                 sortedData.append(item)
             else:
                 sortedData2.append(item)
+        """
         
-        sortedData.extend(sortedData2)
-        print(sortedData)
-        matchinfo.append(sortedData)
+        # sortedData.extend(sortedData2)
+        # print(sortedData)
+        matchinfo.append(selectedData)
     return matchinfo
 
 
@@ -277,7 +297,12 @@ row = [] #reset after each iteration
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", help = "path to the image")
 args = vars(ap.parse_args())
-matchInfo = readRibScrape("Paper Rex vs EDward Gaming.xlsx")
+
+pathLists = getFiles("C:\\Users\\Capta\\Documents\\Visual Studio 2017\\UltCVTracker")
+matchInfo = readRibScrape(pathLists[0])
+
+capturedInfo = []
+# for image in matchInfo[1]:
 imageOutput = readImage(args["image"])
 print(imageOutput)
 print(imageOutput[2][1])
@@ -288,7 +313,7 @@ tempvar2 = [imageOutput[3][1], imageOutput[3][1], imageOutput[3][1]]
 
 print(matchInfo[0][5:10])
 print(tempvar2)
-plhdr = matchNames(matchInfo[0][5:10], tempvar1, tempvar2)
+plhdr = matchNames(matchInfo[0][0:5], tempvar1, tempvar2)
 print(plhdr)
 
 # convert into the correct format after getting rib data
