@@ -45,7 +45,8 @@ def readRibScrape(filepath):
     for i, row in enumerate(infoWorksheet):
         if i == 0:
             continue
-
+        
+        """
         selectedData = []
         team1Name = row[4].value
         team1Players = row[2].value.split(",")
@@ -58,8 +59,21 @@ def readRibScrape(filepath):
         team2Agents = row[3].value.split(",")
         for i, name in enumerate(team2Players):
             selectedData.append([name, team2Agents[i], team2Name])
-        
         """
+        # This is for the FlynnScraper Alpha 1
+        selectedData = []
+        selectedData.append([row[2].value, row[3].value, row[4].value])
+        selectedData.append([row[6].value, row[7].value, row[8].value])
+        selectedData.append([row[10].value, row[11].value, row[12].value])
+        selectedData.append([row[14].value, row[15].value, row[16].value])
+        selectedData.append([row[18].value, row[19].value, row[20].value])
+        selectedData.append([row[22].value, row[23].value, row[24].value])
+        selectedData.append([row[26].value, row[27].value, row[28].value])
+        selectedData.append([row[30].value, row[31].value, row[32].value])
+        selectedData.append([row[34].value, row[35].value, row[36].value])
+        selectedData.append([row[38].value, row[39].value, row[40].value])
+
+        
         sortedData = []
         sortedData2 = []
         comparisonName = selectedData[0][2]
@@ -68,11 +82,11 @@ def readRibScrape(filepath):
                 sortedData.append(item)
             else:
                 sortedData2.append(item)
-        """
         
-        # sortedData.extend(sortedData2)
-        # print(sortedData)
-        matchinfo.append(selectedData)
+        
+        sortedData.extend(sortedData2)
+        print(sortedData)
+        matchinfo.append(sortedData) # Change to SelectedData for new FlynnScrapers
     return matchinfo
 
 
@@ -145,7 +159,7 @@ def readImage(path): #/TODO: turn the arrays into a return statement instead of 
 
     for yCoord in playerNameYValues:
         leftCrop = OCRImage[yCoord:(yCoord + 30), playerNameXValues[0]:(playerNameXValues[0] + 125)]
-        leftCrop = cv2.resize(leftCrop, (250, 60))
+        leftCrop = cv2.resize(leftCrop, (500, 120))
         leftCrop = cv2.threshold(leftCrop, 160, 255, cv2.THRESH_BINARY)
         leftCrop = leftCrop[1]
         leftCrop = cv2.erode(leftCrop, kernel, iterations=2)
@@ -154,7 +168,7 @@ def readImage(path): #/TODO: turn the arrays into a return statement instead of 
         playersLeft.append(name.rstrip('\n'))
 
         rightCrop = OCRImage[yCoord:(yCoord + 30), playerNameXValues[1]:(playerNameXValues[1] + 125)]
-        rightCrop = cv2.resize(rightCrop, (250, 60))
+        rightCrop = cv2.resize(rightCrop, (500, 120))
         rightCrop = cv2.threshold(rightCrop, 160, 255, cv2.THRESH_BINARY)
         rightCrop = rightCrop[1]
         rightCrop = cv2.erode(rightCrop, kernel, iterations=1)
@@ -302,19 +316,37 @@ pathLists = getFiles("C:\\Users\\Capta\\Documents\\Visual Studio 2017\\UltCVTrac
 matchInfo = readRibScrape(pathLists[0])
 
 capturedInfo = []
-# for image in matchInfo[1]:
+for image in pathLists[1]:
+    print(str(image))
+    imageOutput = readImage(image)
+    capturedInfo.append(imageOutput)
+
+playerInfoLeft = []
+playerInfoRight = []
+ultInfoLeft = []
+ultInfoRight = []
+for i, round in enumerate(capturedInfo):
+    print(round)
+    playerInfoLeft.append(round[2][0])
+    playerInfoRight.append(round[2][1])
+    ultInfoLeft.append(round[3][0])
+    ultInfoRight.append(round[3][1])
+
+plhdr = matchNames(matchInfo[0][0:5], playerInfoLeft, ultInfoLeft)
+print(plhdr)
+
+"""
 imageOutput = readImage(args["image"])
 print(imageOutput)
 print(imageOutput[2][1])
 print(imageOutput[3][1])
-
 tempvar1 = [imageOutput[2][1], imageOutput[2][1], imageOutput[2][1]]
 tempvar2 = [imageOutput[3][1], imageOutput[3][1], imageOutput[3][1]]
-
 print(matchInfo[0][5:10])
 print(tempvar2)
 plhdr = matchNames(matchInfo[0][0:5], tempvar1, tempvar2)
 print(plhdr)
+"""
 
 # convert into the correct format after getting rib data
 # table.append()
